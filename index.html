@@ -467,8 +467,17 @@ td {
   <div class="header-actions">
     <button class="btn btn-ghost" onclick="exportCSV()" title="Exporter CSV">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Exporter
+      CSV
     </button>
+    <button class="btn btn-ghost" onclick="exportJSON()" title="Sauvegarder les données">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v14a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+      Sauvegarder
+    </button>
+    <label class="btn btn-ghost" style="cursor:pointer" title="Charger les données">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Charger
+      <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+    </label>
     <button class="btn btn-primary" onclick="openModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Ajouter
@@ -893,7 +902,48 @@ function deleteEntry(idx) {
   applyFilters();
 }
 
-// ===================== EXPORT =====================
+// ===================== EXPORT / IMPORT JSON =====================
+function exportJSON() {
+  const data = { cam: camData, tso: tsoData };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0,10);
+  a.download = `suivi_rm_af_${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.cam && data.tso) {
+        camData = data.cam;
+        tsoData = data.tso;
+        save();
+        applyFilters();
+        renderStats();
+        alert('✅ Données chargées avec succès !');
+      } else {
+        alert('❌ Fichier invalide.');
+      }
+    } catch(err) {
+      alert('❌ Erreur lors de la lecture du fichier.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===================== EXPORT CSV =====================
 function exportCSV() {
   let csv, filename;
   if (currentTab === 'cam') {
