@@ -618,12 +618,12 @@ function renderStats() {
     const af = camData.filter(r => r.type === 'AF').length;
     const facRm = camData.filter(r => (r.okCam||'').toUpperCase().includes('FAC RM')).length;
     const facAf = camData.filter(r => (r.okCam||'').toUpperCase().includes('FAC AF')).length;
-    const okCount = camData.filter(r => ['OUI','OK'].includes((r.okCam||'').toUpperCase())).length;
+    const okCount = camData.filter(r => (r.okCam||'').toUpperCase() === 'FAC OK').length;
     bar.innerHTML = `
       <div class="stat-card"><div class="stat-dot" style="background:#6b7799"></div><div><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div></div>
       <div class="stat-card"><div class="stat-dot" style="background:var(--rm)"></div><div><div class="stat-val" style="color:var(--rm)">${rm}</div><div class="stat-lbl">RM</div></div></div>
       <div class="stat-card"><div class="stat-dot" style="background:var(--af)"></div><div><div class="stat-val" style="color:var(--af)">${af}</div><div class="stat-lbl">AF</div></div></div>
-      <div class="stat-card"><div class="stat-dot" style="background:var(--green)"></div><div><div class="stat-val" style="color:var(--green)">${okCount}</div><div class="stat-lbl">OK / OUI</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--green)"></div><div><div class="stat-val" style="color:var(--green)">${okCount}</div><div class="stat-lbl">FAC OK</div></div></div>
       <div class="stat-card"><div class="stat-dot" style="background:var(--orange)"></div><div><div class="stat-val" style="color:var(--orange)">${facRm}</div><div class="stat-lbl">FAC RM</div></div></div>
       <div class="stat-card"><div class="stat-dot" style="background:var(--af)"></div><div><div class="stat-val" style="color:var(--af)">${facAf}</div><div class="stat-lbl">FAC AF</div></div></div>
     `;
@@ -643,6 +643,7 @@ function renderStats() {
 function badgeOk(val) {
   if (!val) return `<span class="badge" style="background:var(--surface2);color:var(--muted)">—</span>`;
   const v = val.toUpperCase();
+  if (v === 'FAC OK') return `<span class="badge badge-ok">✓ FAC OK</span>`;
   if (v.includes('FAC RM')) return `<span class="badge badge-fac">FAC RM</span>`;
   if (v.includes('FAC AF')) return `<span class="badge" style="background:var(--af-dim);color:var(--af);border:1px solid rgba(168,85,247,.3)">FAC AF</span>`;
   if (v.includes('PLP')) return `<span class="badge badge-plp">PLP OK</span>`;
@@ -668,7 +669,7 @@ function renderTable(data) {
         ${th('technicien','Technicien')}${th('entreprise','Entreprise')}
         ${th('appelEffectue','Appel')}
         <th>Avis CAM</th><th>Avis Tholonet</th>
-        ${th('okCam','OK CAM')}
+        ${th('okCam','Etat Facture')}
         <th>Actions</th>
       </tr></thead>
       <tbody>
@@ -771,14 +772,14 @@ function openModal(idx = null) {
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">OK avec la CAM</label>
+        <label class="form-label">Etat Facture</label>
         <select class="form-select" id="f_okCam">
           <option value="">—</option>
-          <option value="OUI" ${r.okCam==='OUI'?'selected':''}>OUI</option>
-          <option value="OK" ${r.okCam==='OK'?'selected':''}>OK</option>
+          <option value="FAC OK" ${r.okCam==='FAC OK'?'selected':''}>FAC OK</option>
           <option value="FAC RM" ${r.okCam==='FAC RM'?'selected':''}>FAC RM</option>
           <option value="FAC AF" ${r.okCam==='FAC AF'?'selected':''}>FAC AF</option>
           <option value="PLP OK" ${r.okCam==='PLP OK'?'selected':''}>PLP OK</option>
+          <option value="ATTENTE PHOTO TECH" ${r.okCam==='ATTENTE PHOTO TECH'?'selected':''}>ATTENTE PHOTO TECH</option>
         </select>
       </div>
       <div class="form-group full">
@@ -875,7 +876,7 @@ function deleteEntry(idx) {
 function exportCSV() {
   let csv, filename;
   if (currentTab === 'cam') {
-    const headers = ['Type','Code','ND','Date','Technicien','Entreprise','Appel Effectué','Avis CAM','Avis Tholonet','OK CAM','Moral'];
+    const headers = ['Type','Code','ND','Date','Technicien','Entreprise','Appel Effectué','Avis CAM','Avis Tholonet','Etat Facture','Moral'];
     const rows = camData.map(r => [r.type,r.code,r.nd,r.date,r.technicien,r.entreprise,r.appelEffectue,r.avisCam,r.avisTholonet,r.okCam,r.moral]);
     csv = [headers, ...rows].map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(';')).join('\n');
     filename = 'suivi_cam.csv';
