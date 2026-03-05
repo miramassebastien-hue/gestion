@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Photo RM / AF</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c27;
+  --surface2: #1f2435;
+  --border: #2a3045;
+  --border2: #353d56;
+  --text: #e8ecf5;
+  --muted: #6b7799;
+  --muted2: #9aa3bf;
+  --blue: #3b82f6;
+  --blue-dim: #1e3a5f;
+  --green: #22c55e;
+  --green-dim: #14532d;
+  --orange: #f97316;
+  --orange-dim: #431407;
+  --red: #ef4444;
+  --red-dim: #450a0a;
+  --yellow: #eab308;
+  --yellow-dim: #422006;
+  --rm: #3b82f6;
+  --rm-dim: #1e3a5f;
+  --af: #a855f7;
+  --af-dim: #3b0764;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Mulish', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* HEADER */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.logo .rm { color: var(--rm); }
+.logo .sep { color: var(--muted); margin: 0 4px; }
+.logo .af { color: var(--af); }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.tab {
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted2);
+  background: none;
+  border: none;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.tab:hover { color: var(--text); background: var(--surface2); }
+.tab.active { background: var(--blue-dim); color: var(--blue); }
+.tab.active.tso { background: rgba(34,197,94,0.12); color: var(--green); }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Mulish', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(59,130,246,0.4); }
+.btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.btn-green:hover { background: var(--green); color: #fff; }
+
+/* STATS BAR */
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.stat-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+}
+
+.search-box svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 10px 8px 34px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Mulish', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus { border-color: var(--blue); }
+
+.filter-select {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Mulish', sans-serif;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border 0.2s;
+}
+
+.filter-select:focus { border-color: var(--blue); }
+.filter-select option { background: var(--surface2); }
+
+/* TABLE */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.table-wrap {
+  padding: 0 24px 24px;
+  overflow: auto;
+  flex: 1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead th {
+  background: var(--surface2);
+  color: var(--muted2);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+}
+
+thead th:hover { color: var(--text); }
+thead th .sort-icon { opacity: 0.4; margin-left: 4px; }
+thead th.sorted .sort-icon { opacity: 1; color: var(--blue); }
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  animation: rowIn 0.2s ease both;
+}
+
+tbody tr:hover { background: var(--surface2); }
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+td {
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-rm { background: var(--rm-dim); color: var(--rm); border: 1px solid rgba(59,130,246,0.3); }
+.badge-af { background: var(--af-dim); color: var(--af); border: 1px solid rgba(168,85,247,0.3); }
+.badge-oui { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.badge-non { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.badge-plp { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+.badge-fac { background: rgba(249,115,22,0.1); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+.badge-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+
+.cam-cell { max-width: 260px; }
+.cam-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted2); font-size: 12px; }
+.cam-text:hover { white-space: normal; overflow: visible; background: var(--surface); z-index: 10; position: relative; padding: 4px; border-radius: 4px; }
+
+.actions-cell { display: flex; gap: 6px; }
+.icon-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.icon-btn:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-dim); }
+.icon-btn.del:hover { color: var(--red); border-color: var(--red); background: var(--red-dim); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-state svg { margin-bottom: 14px; opacity: 0.3; }
+.empty-state p { font-size: 15px; }
+
+/* MODAL */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: 600px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.modal-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.modal-close:hover { color: var(--text); background: var(--surface2); }
+
+.modal-body { padding: 20px 24px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted2);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.form-input, .form-select, .form-textarea {
+  padding: 9px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Mulish', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s;
+  width: 100%;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.form-select option { background: var(--surface2); }
+.form-textarea { resize: vertical; min-height: 70px; }
+
+.modal-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* TSO Table specifics */
+.tso-verif { max-width: 320px; font-size: 12px; color: var(--muted2); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-bar { padding: 12px 16px; }
+  .toolbar { padding: 10px 16px; }
+  .table-wrap { padding: 0 8px 24px; }
+  header { padding: 0 16px; gap: 10px; }
+}
+
+/* Tooltip pour texte long */
+.tooltip-cell {
+  position: relative;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.tooltip-cell:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: normal;
+  width: 280px;
+  z-index: 999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  line-height: 1.5;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="rm">RM</span><span class="sep">/</span><span class="af">AF</span> &nbsp;<span style="color:var(--muted);font-size:13px;font-weight:400">Suivi Photo</span></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('cam', this)">📷 SUIVIE CAM</button>
+    <button class="tab tso" onclick="switchTab('tso', this)">🔧 SUIVIE TSO</button>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="exportCSV()" title="Exporter CSV">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exporter
+    </button>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter
+    </button>
+  </div>
+</header>
+
+<div class="main-content">
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar"></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" type="text" placeholder="Rechercher ND, technicien, code…" oninput="applyFilters()" id="searchInput">
+  </div>
+  <select class="filter-select" id="filterType" onchange="applyFilters()">
+    <option value="">Tous types</option>
+    <option value="RM">RM</option>
+    <option value="AF">AF</option>
+  </select>
+  <select class="filter-select" id="filterEntreprise" onchange="applyFilters()">
+    <option value="">Toutes entreprises</option>
+  </select>
+  <select class="filter-select" id="filterOkCam" onchange="applyFilters()">
+    <option value="">Tous statuts OK</option>
+    <option value="OUI">OUI</option>
+    <option value="FAC RM">FAC RM</option>
+    <option value="FAC AF">FAC AF</option>
+    <option value="PLP OK">PLP OK</option>
+  </select>
+  <span id="rowCount" style="color:var(--muted);font-size:12px;margin-left:auto"></span>
+</div>
+
+<!-- TABLE CONTAINER -->
+<div class="table-wrap" id="tableContainer"></div>
+</div><!-- end main-content -->
+
+<!-- MODAL -->
+<div class="overlay" id="modalOverlay" style="display:none" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Ajouter une entrée</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEntry()" id="saveBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+let currentTab = 'cam';
+let editIndex = null;
+let sortCol = null;
+let sortDir = 1;
+
+const defaultCamData = [{"type": "AF", "code": "IRCFTH", "nd": "0491475671", "date": "2026-02-12", "technicien": "AKRIMI Wissame", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "POINT DE PENE  NON CONFORM / MANQUE CONFIRMATION AERIEN", "avisTholonet": "", "okCam": "OUI", "moral": ""}, {"type": "AF", "code": "LMSFTH", "nd": "0442010512", "date": "2026-02-12", "technicien": "Depieds Valentin", "entreprise": "sam telecom", "appelEffectue": "non", "avisCam": "c'est bien un PLP / il n y a pas lieu de justifier un aerien", "avisTholonet": "", "okCam": "PLP OK", "moral": ""}, {"type": "RM", "code": "LMR", "nd": "0492750958", "date": "2026-02-12", "technicien": "BAH Abdoulaye", "entreprise": "S&H", "appelEffectue": "non", "avisCam": "Les photos point de péné non conforme PHOTO DU PB / et manque support", "avisTholonet": "normal pas de point de Pen car pb à côté de la PTO", "okCam": "OK", "moral": ""}, {"type": "RM", "code": "IQL", "nd": "0490458223", "date": "2026-02-12", "technicien": "TALBI Rayane", "entreprise": "SCOFITEC", "appelEffectue": "oui", "avisCam": "Photo avant PTO GA non conforme", "avisTholonet": "", "okCam": "en PLP faudrait le passer", "moral": ""}, {"type": "RM", "code": "IQP", "nd": "0490452041", "date": "2026-02-12", "technicien": "BOUAKEL Samir", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "point de pene non conforme manque cable fibre", "avisTholonet": "", "okCam": "oui", "moral": ""}, {"type": "RM", "code": "IQS", "nd": "0491474969", "date": "2026-02-12", "technicien": "MLINDE Mhoudine", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "PTO non fixée", "avisTholonet": "", "okCam": "FAC RM", "moral": ""}, {"type": "AF", "code": "IQS", "nd": "0491476212", "date": "2026-02-13", "technicien": "CHARMAT ABDERAHMANE", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "PHOTO SANS PLATINE PTO", "avisTholonet": "", "okCam": "FAC AF", "moral": ""}, {"type": "RM", "code": "IQL", "nd": "0442632827", "date": "2026-02-13", "technicien": "CRUDU THOMAS", "entreprise": "BA telecom", "appelEffectue": "oui", "avisCam": "PHOTO PM NON CONFORME / PHOTO PRISE SUR UN TEL", "avisTholonet": "", "okCam": "FAC RM", "moral": ""}, {"type": "AF", "code": "LMR", "nd": "0490912858", "date": "2026-02-13", "technicien": "MGARRECH Razi", "entreprise": "SA telecom", "appelEffectue": "oui", "avisCam": "AF - pas d'aérien en intérieur", "avisTholonet": "exacte", "okCam": "FAC AF", "moral": ""}, {"type": "RM", "code": "IQS", "nd": "0491267204", "date": "2026-02-13", "technicien": "SELATNI Badreddine", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "RM//PTO APRES NON CONFORME PAS POSER", "avisTholonet": "PTO NON FIXEE", "okCam": "FAC RM", "moral": ""}, {"type": "RM", "code": "IQL", "nd": "0442613274", "date": "2026-02-15", "technicien": "HAMZA Said", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "// RM - Point de pénétration non conforme", "avisTholonet": "le tech a repris la photo du point de Pene / facture ok", "okCam": "FAC ok", "moral": ""}, {"type": "AF", "code": "IQL", "nd": "0442619260", "date": "2026-02-17", "technicien": "AUDIFRET Jordan", "entreprise": "MT FIBER", "appelEffectue": "OUI", "avisCam": "af//photo point de pene ne prouve pas l'aérien", "avisTholonet": "vue avec CA facture passer en façade", "okCam": "FAC ok", "moral": ""}, {"type": "RM", "code": "IQP", "nd": "0491268863", "date": "2026-02-17", "technicien": "HAMZA Said", "entreprise": "FAST telecom", "appelEffectue": "OUI", "avisCam": "RM//MANQUE PHOTO POINT DE PENETRATION", "avisTholonet": "vue avec CA facture passer en façade", "okCam": "FAC OK", "moral": ""}, {"type": "RM", "code": "LMP", "nd": "0492432738", "date": "2026-02-26", "technicien": "BMMOUSSAT abdelkader", "entreprise": "SA telecom", "appelEffectue": "oui", "avisCam": "492432738 //LMPFTH//AF //aucunes preuves aérien pour facturer LSA passage en LSOU//", "avisTholonet": "", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IOP", "nd": "VIA0000147206", "date": "2026-02-27", "technicien": "ARFAOUI Souphian", "entreprise": "SCOFITEC", "appelEffectue": "oui", "avisCam": "VIA0000147206 // IOPBOA // RM - photo PTO avant non conforme // ARFAOUI Souphian", "avisTholonet": "Fiche Crioc n'est pas au courant de laprise de photo", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IHP", "nd": "0442600256", "date": "2026-02-27", "technicien": "HAMZA Said", "entreprise": "FAST telecom", "appelEffectue": "injoignable", "avisCam": "0442600256 - IHP - AF - PAS DE TSFH PAS DE DECHARGE - HAMZA Said", "avisTholonet": "", "okCam": "FAC Impact TSFH", "moral": ""}, {"type": "RM", "code": "IRC", "nd": "0442315361", "date": "27/02/02026", "technicien": "EL Haboub Zakaria", "entreprise": "GTK", "appelEffectue": "attente / sms", "avisCam": "MANQUE PHOTO PB APRES /", "avisTholonet": "oublie il avait sur son tel", "okCam": "FAC ok", "moral": ""}, {"type": "AF", "code": "IRC", "nd": "0492462816", "date": "2026-02-27", "technicien": "HAFIDHOU Ali", "entreprise": "SA TELECOM", "appelEffectue": "NON", "avisCam": "AF - PAS DE POINT DE PENETRATION", "avisTholonet": "il y a un photo de point de pénétration dans crioc", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQC", "nd": "0442014305", "date": "2026-02-27", "technicien": "DAAI Jassem", "entreprise": "Interne", "appelEffectue": "non", "avisCam": "RM - PHOTO PTO NON VISIBLE", "avisTholonet": "la photo pto est bien dans le Pas a pas", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IRC", "nd": "0491268724", "date": "2026-02-27", "technicien": "ZAITER Mohamed", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "0491268724 / IRC - AF - manque preuve aerien", "avisTholonet": "attente photo / ok", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IQS", "nd": "0442586876", "date": "2026-02-27", "technicien": "VERRY MOLLE Ilan", "entreprise": "BF Connect", "appelEffectue": "OUI", "avisCam": "0442586876 / IQS - AF - manque preuve aerien", "avisTholonet": "attente photo  / ok", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQL", "nd": "0491271781", "date": "2026-02-27", "technicien": "SULAIMON Afeez", "entreprise": "PHOCEENNE TELECOM", "appelEffectue": "OUI", "avisCam": "/ IQL - RM - point de pene ko /", "avisTholonet": "attente photo point de pene", "okCam": "", "moral": ""}, {"type": "RM", "code": "IQP", "nd": "0490913462", "date": "2026-02-27", "technicien": "MGARRECH Razi", "entreprise": "SA telecom", "appelEffectue": "OUI", "avisCam": "RM - PAS DE PHOTO DE PB", "avisTholonet": "attente photo pb / ok", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQP", "nd": "0491896465", "date": "2026-02-27", "technicien": "ATTOUMANI Mohamed", "entreprise": "SA telecom", "appelEffectue": "MESSAGE", "avisCam": "RM - PHOTO REF PTO NON VISIBLE // PAS DE PTO APRES ZOOMEE", "avisTholonet": "ATTENTE RETOUR", "okCam": "", "moral": ""}, {"type": "RM", "code": "IQL", "nd": "0492759470", "date": "2026-02-27", "technicien": "JIMENEZ Allan", "entreprise": "S&H", "appelEffectue": "oui", "avisCam": "RM // PHOTO POINT DE PENETRATION NON CONFORME PAS DE CABLE QUI PENETRE VISIBLE // PHOTO PTO ZOOMER PAS DE PLATINE DONC PHOTO NON CONFORME", "avisTholonet": "Le technicien a été distrait par la cliente malade.", "okCam": "FAC RM", "moral": ""}, {"type": "RM", "code": "IQP", "nd": "0492465059", "date": "2026-02-27", "technicien": "Cholet Benoit", "entreprise": "SCOFITEC", "appelEffectue": "MESSAGE", "avisCam": "RM PHOTO AVANT ZOOMER NON CONFORME // PAS DE PLATINE POSER", "avisTholonet": "Brady HS / j ai avertie pour la platine PTO", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IRC", "nd": "0492462829", "date": "2026-02-27", "technicien": "DRAHE Luc", "entreprise": "SA telecom", "appelEffectue": "oui", "avisCam": "af // pas de smoove en plus ni de câble client", "avisTholonet": "Les photos PTO prouve le tirage / erreur photo PB", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "LMLFTH", "nd": "0442640021", "date": "2026-02-28", "technicien": "Laugier Laurent", "entreprise": "BA telecom", "appelEffectue": "non", "avisCam": "CA AP // AF - LMLFTH - pas d'APIE fait donc pas de PSER - Laugier Laurent", "avisTholonet": "Marouane a déjà eu le tech concernant APIE / photo pm non conforme", "okCam": "FAC RM", "moral": ""}, {"type": "RM", "code": "IQLFTH", "nd": "0442632524", "date": "2026-03-02", "technicien": "CRUDU THOMAS", "entreprise": "BA telecom", "appelEffectue": "oui", "avisCam": "PHOTO POINT DE PENETRATION NON CONFORME PAS DE CABLE QUI PENETRE VISIBLE", "avisTholonet": "il y a une photo de point de pénétration dans crioc", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQPFTH", "nd": "0442011683", "date": "2026-03-02", "technicien": "DAAI Jassem", "entreprise": "Circet", "appelEffectue": "OUI", "avisCam": "0442011683 / RM - IQL - pb av/ap non conforme", "avisTholonet": "ATTENTE RETOUR TECH PHOTO PB", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQLFTH", "nd": "0491336353", "date": "2026-03-02", "technicien": "KHELIL Ahmed", "entreprise": "FAST telecom", "appelEffectue": "message", "avisCam": "RM//POINT DE PENE NON CONFORME PAS DE CABLE ET PAS REBOUCHE", "avisTholonet": "attente retour tech", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "APIE / AF", "code": "IOPBOA", "nd": "VIA0000148085", "date": "2026-03-03", "technicien": "HAMADA NAKIB", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "VIA0000148085 // IOPBOA // AF - APIE non fait donc pas PSER // HAMADA NAKIB", "avisTholonet": "Attente retour CA / tant que c'est que Apie", "okCam": "FAC Impact TSFH", "moral": ""}, {"type": "AF", "code": "LMPFTH", "nd": "0492615996", "date": "2026-03-03", "technicien": "RICHARD Sebastien", "entreprise": "SCOFITEC", "appelEffectue": "pas le bon numero", "avisCam": "CA AP // LMPFTH - AF - Aucune preuve aérienne - passage en LSOU - RICHARD Sebastien PRAT Thomas", "avisTholonet": "Photo Façade en PJ", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IQPSWA", "nd": "0491271511", "date": "2026-03-03", "technicien": "MEDHI HAMDI", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "AF - IQPSWA_ITCD - Pas de justification aérienne. Je ne vois pas le sol du point de pénétration + point de pénétration intérieur ne compte pas", "avisTholonet": "Photo aerien", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IQPFTH", "nd": "0492461049", "date": "2026-03-03", "technicien": "ABDELLI Younes", "entreprise": "SA telecom", "appelEffectue": "oui", "avisCam": "// AF - MANQUE PREUVES AERIEN", "avisTholonet": "Photo façade dans kizeo mais ne prouve pas l aerien car manque photo eloigné point de péné", "okCam": "FAC Impact LSOU", "moral": ""}, {"type": "RM", "code": "IQRSWA", "nd": "0490576258", "date": "2026-03-03", "technicien": "Sdiri Ismael", "entreprise": "CIRCET", "appelEffectue": "oui", "avisCam": "/IQRSWA_ITCD//RM //aucunes preuves aérien pour facturer LSA//point de pénétration non conforme//photo grand angle avant/après hs// Sdiri Ismael Osmani Bilal", "avisTholonet": "Tech a fait les photos manquante", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IDVFTH", "nd": "0442617174", "date": "2026-03-03", "technicien": "DAROUECHI Ahamada", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "// RM - photo pto non conforme", "avisTholonet": "C'est la photo du point de Pénétration qui est non conforme", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IHPFTH", "nd": "0492465508", "date": "2026-03-03", "technicien": "BA Abdarahman", "entreprise": "SA TELECOM", "appelEffectue": "oui", "avisCam": "AF//APIE NON FAIT", "avisTholonet": "attente retour information vu avec Laudine", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "RM", "code": "IQCFTH", "nd": "0490501863", "date": "2026-03-04", "technicien": "AMARAL José", "entreprise": "CIRCET", "appelEffectue": "oui", "avisCam": "0490501863 / IQC - RM - pas de photo de pto", "avisTholonet": "attente retour tech pour photo PTO", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IQSFTH", "nd": "0491271556", "date": "2026-03-04", "technicien": "HAMADA NAKIB", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "af//Manque photo pto grand angle avant", "avisTholonet": "Car travaux déjà commencés / mais non impactant", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "", "code": "IRCFTH", "nd": "0491271910", "date": "2026-03-04", "technicien": "MLINDE Mhoudine", "entreprise": "FAST telecom", "appelEffectue": "oui", "avisCam": "af// manque photo pto grand angle avant", "avisTholonet": "le technciien était sur place mais n a pas voulu faire la photo de la grande angle apres", "okCam": "FAC RM", "moral": ""}, {"type": "AF", "code": "IQLFTH", "nd": "0492451439", "date": "2026-03-04", "technicien": "BA Abdarahman", "entreprise": "SA telecom", "appelEffectue": "oui", "avisCam": "0492451439 / IQL - AF - manque preuve aerien /", "avisTholonet": "Attente point de pénétration", "okCam": "Attente Photo Client", "moral": ""}, {"type": "AF", "code": "IRC", "nd": "0490508802", "date": "2026-03-04", "technicien": "Sdiri Ismael", "entreprise": "CIRCET", "appelEffectue": "non", "avisCam": "Manque photo pto avant+pto apres grand angle", "avisTholonet": "Malgré la photo manquante, on peut prouver le tirage de cable d3", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "AF", "code": "IRC", "nd": "0442642003", "date": "2026-03-04", "technicien": "CAMARA Mamoud", "entreprise": "CIRCET", "appelEffectue": "OUI", "avisCam": "// AF- photo PTO GA apres manquante", "avisTholonet": "ATT photo avant et apres GA pto", "okCam": "FAC ok NON IMPACTEE", "moral": ""}, {"type": "PLP", "code": "IRCFTH", "nd": "0491080514", "date": "2026-03-04", "technicien": "SI ABDALLAH ABDELMALEK", "entreprise": "FAST telecom", "appelEffectue": "non", "avisCam": "Manque photo pb apres", "avisTholonet": "la photo a été rajouté apres le contrôle de la can", "okCam": "FAC ok NON IMPACTEE", "moral": ""}];
+
+const defaultTsoData = [{"nd": "0490424435", "technicien": "CALIK Sinan", "partenaire": "SCOFITEC", "verification": "MANQUE PHOTO ETIQUETTE PB"}, {"nd": "0442025150", "technicien": "BALKAYA Rodi", "partenaire": "K WORK CONNECT", "verification": "Manque PHOTO ETIQUETTE PB / interieur PB/ pas de code de decharge"}, {"nd": "0490439278", "technicien": "BACHIR-BEY Meihdy", "partenaire": "HK TELECOM", "verification": "PHOTOS ok et com ok"}, {"nd": "0442091973", "technicien": "TABOUCHI Bilel", "partenaire": "Azur fibre", "verification": "Photo Pas à pas ok / geolocalisation ok / com ok"}, {"nd": "0491426265", "technicien": "CHAIEB Hedi", "partenaire": "MT FIBER", "verification": "Fiche Kizeo n'était pas la bonne"}];
+
+let camData = JSON.parse(localStorage.getItem('suivi_cam_v2') || 'null') || defaultCamData;
+let tsoData = JSON.parse(localStorage.getItem('suivi_tso_v2') || 'null') || defaultTsoData;
+
+function save() {
+  localStorage.setItem('suivi_cam_v2', JSON.stringify(camData));
+  localStorage.setItem('suivi_tso_v2', JSON.stringify(tsoData));
+}
+
+// ===================== UI =====================
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  sortCol = null;
+  document.getElementById('filterType').style.display = tab === 'cam' ? '' : 'none';
+  document.getElementById('filterOkCam').style.display = tab === 'cam' ? '' : 'none';
+  applyFilters();
+  renderStats();
+}
+
+function getFilteredData() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filterType = document.getElementById('filterType').value;
+  const filterEnt = document.getElementById('filterEntreprise').value;
+  const filterOk = document.getElementById('filterOkCam').value;
+
+  if (currentTab === 'cam') {
+    return camData.filter((r, i) => {
+      r._idx = i;
+      const s = `${r.type} ${r.code} ${r.nd} ${r.technicien} ${r.entreprise} ${r.avisCam} ${r.okCam}`.toLowerCase();
+      return (!search || s.includes(search))
+        && (!filterType || r.type === filterType)
+        && (!filterEnt || r.entreprise === filterEnt)
+        && (!filterOk || r.okCam === filterOk);
+    });
+  } else {
+    return tsoData.filter((r, i) => {
+      r._idx = i;
+      const s = `${r.nd} ${r.technicien} ${r.partenaire} ${r.verification}`.toLowerCase();
+      return (!search || s.includes(search))
+        && (!filterEnt || r.partenaire === filterEnt);
+    });
+  }
+}
+
+function populateEntrepriseFilter() {
+  const sel = document.getElementById('filterEntreprise');
+  const current = sel.value;
+  const list = currentTab === 'cam'
+    ? [...new Set(camData.map(r => r.entreprise).filter(Boolean))].sort()
+    : [...new Set(tsoData.map(r => r.partenaire).filter(Boolean))].sort();
+  sel.innerHTML = `<option value="">${currentTab === 'cam' ? 'Toutes entreprises' : 'Tous partenaires'}</option>`
+    + list.map(e => `<option value="${e}" ${e===current?'selected':''}>${e}</option>`).join('');
+}
+
+function applyFilters() {
+  populateEntrepriseFilter();
+  const data = getFilteredData();
+  if (sortCol !== null) {
+    data.sort((a, b) => {
+      const av = a[sortCol] || '';
+      const bv = b[sortCol] || '';
+      return av.toString().localeCompare(bv.toString()) * sortDir;
+    });
+  }
+  renderTable(data);
+  renderStats();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  applyFilters();
+}
+
+// ===================== STATS =====================
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  if (currentTab === 'cam') {
+    const total = camData.length;
+    const rm = camData.filter(r => r.type === 'RM').length;
+    const af = camData.filter(r => r.type === 'AF').length;
+    const facRm = camData.filter(r => (r.okCam||'').toUpperCase().includes('FAC RM')).length;
+    const facAf = camData.filter(r => (r.okCam||'').toUpperCase().includes('FAC AF')).length;
+    const okCount = camData.filter(r => ['OUI','OK'].includes((r.okCam||'').toUpperCase())).length;
+    bar.innerHTML = `
+      <div class="stat-card"><div class="stat-dot" style="background:#6b7799"></div><div><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--rm)"></div><div><div class="stat-val" style="color:var(--rm)">${rm}</div><div class="stat-lbl">RM</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--af)"></div><div><div class="stat-val" style="color:var(--af)">${af}</div><div class="stat-lbl">AF</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--green)"></div><div><div class="stat-val" style="color:var(--green)">${okCount}</div><div class="stat-lbl">OK / OUI</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--orange)"></div><div><div class="stat-val" style="color:var(--orange)">${facRm}</div><div class="stat-lbl">FAC RM</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--af)"></div><div><div class="stat-val" style="color:var(--af)">${facAf}</div><div class="stat-lbl">FAC AF</div></div></div>
+    `;
+  } else {
+    const total = tsoData.length;
+    const ok = tsoData.filter(r => (r.verification||'').toLowerCase().includes('ok')).length;
+    const nok = total - ok;
+    bar.innerHTML = `
+      <div class="stat-card"><div class="stat-dot" style="background:#6b7799"></div><div><div class="stat-val">${total}</div><div class="stat-lbl">Total TSO</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--green)"></div><div><div class="stat-val" style="color:var(--green)">${ok}</div><div class="stat-lbl">Conformes</div></div></div>
+      <div class="stat-card"><div class="stat-dot" style="background:var(--red)"></div><div><div class="stat-val" style="color:var(--red)">${nok}</div><div class="stat-lbl">Non conformes</div></div></div>
+    `;
+  }
+}
+
+// ===================== TABLES =====================
+function badgeOk(val) {
+  if (!val) return `<span class="badge" style="background:var(--surface2);color:var(--muted)">—</span>`;
+  const v = val.toUpperCase();
+  if (v.includes('FAC RM')) return `<span class="badge badge-fac">FAC RM</span>`;
+  if (v.includes('FAC AF')) return `<span class="badge" style="background:var(--af-dim);color:var(--af);border:1px solid rgba(168,85,247,.3)">FAC AF</span>`;
+  if (v.includes('PLP')) return `<span class="badge badge-plp">PLP OK</span>`;
+  if (v === 'OUI' || v === 'OK') return `<span class="badge badge-ok">✓ ${val}</span>`;
+  return `<span class="badge" style="background:var(--surface2);color:var(--muted2);border:1px solid var(--border)">${val}</span>`;
+}
+
+function renderTable(data) {
+  const container = document.getElementById('tableContainer');
+  document.getElementById('rowCount').textContent = `${data.length} entrée${data.length !== 1 ? 's' : ''}`;
+
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>Aucun résultat trouvé</p></div>`;
+    return;
+  }
+
+  if (currentTab === 'cam') {
+    const th = (key, label) => `<th onclick="sortBy('${key}')">${label} <span class="sort-icon">${sortCol===key?(sortDir===1?'↑':'↓'):'↕'}</span></th>`;
+    container.innerHTML = `
+    <table>
+      <thead><tr>
+        ${th('type','Type')}${th('code','Code')}${th('nd','ND')}${th('date','Date')}
+        ${th('technicien','Technicien')}${th('entreprise','Entreprise')}
+        ${th('appelEffectue','Appel')}
+        <th>Avis CAM</th><th>Avis Tholonet</th>
+        ${th('okCam','OK CAM')}
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+      ${data.map(r => `<tr>
+        <td><span class="badge ${r.type === 'RM' ? 'badge-rm' : 'badge-af'}">${r.type}</span></td>
+        <td><code style="color:var(--blue);font-size:12px">${r.code||'—'}</code></td>
+        <td style="font-family:monospace;font-size:12px;color:var(--text)">${r.nd||'—'}</td>
+        <td style="color:var(--muted2);font-size:12px">${r.date||'—'}</td>
+        <td style="font-weight:500">${r.technicien||'—'}</td>
+        <td style="color:var(--muted2)">${r.entreprise||'—'}</td>
+        <td><span class="badge ${(r.appelEffectue||'').toLowerCase()==='oui' ? 'badge-oui' : 'badge-non'}">${r.appelEffectue||'—'}</span></td>
+        <td class="tooltip-cell" data-tip="${(r.avisCam||'').replace(/"/g,'&quot;')}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2);font-size:12px">${r.avisCam||'—'}</td>
+        <td class="tooltip-cell" data-tip="${(r.avisTholonet||'').replace(/"/g,'&quot;')}" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2);font-size:12px">${r.avisTholonet||'—'}</td>
+        <td>${badgeOk(r.okCam)}</td>
+        <td><div class="actions-cell">
+          <button class="icon-btn" onclick="openModal(${r._idx})" title="Modifier">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn del" onclick="deleteEntry(${r._idx})" title="Supprimer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } else {
+    const th = (key, label) => `<th onclick="sortBy('${key}')">${label} <span class="sort-icon">${sortCol===key?(sortDir===1?'↑':'↓'):'↕'}</span></th>`;
+    container.innerHTML = `
+    <table>
+      <thead><tr>
+        ${th('nd','ND')}${th('technicien','Technicien')}${th('partenaire','Partenaire')}
+        <th>Vérification</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+      ${data.map(r => `<tr>
+        <td style="font-family:monospace;font-size:12px;color:var(--text)">${r.nd||'—'}</td>
+        <td style="font-weight:500">${r.technicien||'—'}</td>
+        <td style="color:var(--muted2)">${r.partenaire||'—'}</td>
+        <td class="tooltip-cell" data-tip="${(r.verification||'').replace(/"/g,'&quot;')}" style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2);font-size:12px">${r.verification||'—'}</td>
+        <td><div class="actions-cell">
+          <button class="icon-btn" onclick="openModal(${r._idx})" title="Modifier">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn del" onclick="deleteEntry(${r._idx})" title="Supprimer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+}
+
+// ===================== MODAL =====================
+function openModal(idx = null) {
+  editIndex = idx;
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+  overlay.style.display = 'flex';
+
+  if (currentTab === 'cam') {
+    const r = idx !== null ? camData[idx] : {};
+    title.textContent = idx !== null ? 'Modifier l\'entrée CAM' : 'Ajouter une entrée CAM';
+    body.innerHTML = `<div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Type *</label>
+        <select class="form-select" id="f_type">
+          <option value="RM" ${r.type==='RM'?'selected':''}>RM</option>
+          <option value="AF" ${r.type==='AF'?'selected':''}>AF</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Code</label>
+        <input class="form-input" id="f_code" value="${r.code||''}" placeholder="Ex: IQL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ND *</label>
+        <input class="form-input" id="f_nd" value="${r.nd||''}" placeholder="0491475671">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="f_date" value="${r.date||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Technicien</label>
+        <input class="form-input" id="f_technicien" value="${r.technicien||''}" placeholder="Nom prénom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entreprise</label>
+        <input class="form-input" id="f_entreprise" value="${r.entreprise||''}" placeholder="Ex: FAST telecom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Appel Effectué</label>
+        <select class="form-select" id="f_appel">
+          <option value="">—</option>
+          <option value="oui" ${(r.appelEffectue||'').toLowerCase()==='oui'?'selected':''}>Oui</option>
+          <option value="non" ${(r.appelEffectue||'').toLowerCase()==='non'?'selected':''}>Non</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">OK avec la CAM</label>
+        <select class="form-select" id="f_okCam">
+          <option value="">—</option>
+          <option value="OUI" ${r.okCam==='OUI'?'selected':''}>OUI</option>
+          <option value="OK" ${r.okCam==='OK'?'selected':''}>OK</option>
+          <option value="FAC RM" ${r.okCam==='FAC RM'?'selected':''}>FAC RM</option>
+          <option value="FAC AF" ${r.okCam==='FAC AF'?'selected':''}>FAC AF</option>
+          <option value="PLP OK" ${r.okCam==='PLP OK'?'selected':''}>PLP OK</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Avis CAM</label>
+        <textarea class="form-textarea" id="f_avisCam" placeholder="Observations CAM…">${r.avisCam||''}</textarea>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Avis Tholonet</label>
+        <textarea class="form-textarea" id="f_avisTholonet" placeholder="Avis Tholonet…">${r.avisTholonet||''}</textarea>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Moral technicien</label>
+        <input class="form-input" id="f_moral" value="${r.moral||''}" placeholder="Observation morale…">
+      </div>
+    </div>`;
+  } else {
+    const r = idx !== null ? tsoData[idx] : {};
+    title.textContent = idx !== null ? 'Modifier l\'entrée TSO' : 'Ajouter une entrée TSO';
+    body.innerHTML = `<div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">ND *</label>
+        <input class="form-input" id="f_nd" value="${r.nd||''}" placeholder="0490424435">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Technicien</label>
+        <input class="form-input" id="f_technicien" value="${r.technicien||''}" placeholder="Nom prénom">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Partenaire</label>
+        <input class="form-input" id="f_partenaire" value="${r.partenaire||''}" placeholder="Ex: SCOFITEC">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Vérification</label>
+        <textarea class="form-textarea" id="f_verification" style="min-height:100px" placeholder="Description de la vérification…">${r.verification||''}</textarea>
+      </div>
+    </div>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  editIndex = null;
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveEntry() {
+  if (currentTab === 'cam') {
+    const nd = document.getElementById('f_nd').value.trim();
+    if (!nd) { alert('Le ND est requis.'); return; }
+    const entry = {
+      type: document.getElementById('f_type').value,
+      code: document.getElementById('f_code').value.trim(),
+      nd,
+      date: document.getElementById('f_date').value,
+      technicien: document.getElementById('f_technicien').value.trim(),
+      entreprise: document.getElementById('f_entreprise').value.trim(),
+      appelEffectue: document.getElementById('f_appel').value,
+      avisCam: document.getElementById('f_avisCam').value.trim(),
+      avisTholonet: document.getElementById('f_avisTholonet').value.trim(),
+      okCam: document.getElementById('f_okCam').value,
+      moral: document.getElementById('f_moral').value.trim(),
+    };
+    if (editIndex !== null) camData[editIndex] = entry;
+    else camData.unshift(entry);
+  } else {
+    const nd = document.getElementById('f_nd').value.trim();
+    if (!nd) { alert('Le ND est requis.'); return; }
+    const entry = {
+      nd,
+      technicien: document.getElementById('f_technicien').value.trim(),
+      partenaire: document.getElementById('f_partenaire').value.trim(),
+      verification: document.getElementById('f_verification').value.trim(),
+    };
+    if (editIndex !== null) tsoData[editIndex] = entry;
+    else tsoData.unshift(entry);
+  }
+  save();
+  closeModal();
+  applyFilters();
+}
+
+function deleteEntry(idx) {
+  if (!confirm('Supprimer cette entrée ?')) return;
+  if (currentTab === 'cam') camData.splice(idx, 1);
+  else tsoData.splice(idx, 1);
+  save();
+  applyFilters();
+}
+
+// ===================== EXPORT =====================
+function exportCSV() {
+  let csv, filename;
+  if (currentTab === 'cam') {
+    const headers = ['Type','Code','ND','Date','Technicien','Entreprise','Appel Effectué','Avis CAM','Avis Tholonet','OK CAM','Moral'];
+    const rows = camData.map(r => [r.type,r.code,r.nd,r.date,r.technicien,r.entreprise,r.appelEffectue,r.avisCam,r.avisTholonet,r.okCam,r.moral]);
+    csv = [headers, ...rows].map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(';')).join('\n');
+    filename = 'suivi_cam.csv';
+  } else {
+    const headers = ['ND','Technicien','Partenaire','Vérification'];
+    const rows = tsoData.map(r => [r.nd,r.technicien,r.partenaire,r.verification]);
+    csv = [headers, ...rows].map(r => r.map(c => `"${(c||'').toString().replace(/"/g,'""')}"`).join(';')).join('\n');
+    filename = 'suivi_tso.csv';
+  }
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = filename;
+  a.click();
+}
+
+// ===================== INIT =====================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey||e.metaKey) && e.key === 'n') { e.preventDefault(); openModal(); }
+});
+
+// Init filters visibility
+document.getElementById('filterType').style.display = '';
+document.getElementById('filterOkCam').style.display = '';
+
+applyFilters();
+renderStats();
+</script>
+</body>
+</html>
