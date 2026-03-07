@@ -504,18 +504,57 @@ td {
   <div class="login-box">
     <div class="login-logo">
       <div class="ltitle"><span style="color:var(--rm)">RM</span><span style="color:var(--muted)">/</span><span style="color:var(--af)">AF</span></div>
-      <div class="lsubtitle">Suivi Photo — Connexion requise</div>
+      <div class="lsubtitle" id="loginSubtitle">Suivi Photo — Connexion</div>
     </div>
-    <div class="login-field">
-      <label class="login-label">Email</label>
-      <input class="login-input" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px;">
+      <button id="tabLogin" onclick="switchLoginTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;transition:all 0.2s">Se connecter</button>
+      <button id="tabRegister" onclick="switchLoginTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:none;color:var(--muted2);transition:all 0.2s">Demander un accès</button>
     </div>
-    <div class="login-field">
-      <label class="login-label">Mot de passe</label>
-      <input class="login-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+
+    <!-- Login form -->
+    <div id="formLogin">
+      <div class="login-field">
+        <label class="login-label">Email</label>
+        <input class="login-input" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Mot de passe</label>
+        <input class="login-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
     </div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
+
+    <!-- Register form -->
+    <div id="formRegister" style="display:none">
+      <div class="login-field">
+        <label class="login-label">Prénom Nom</label>
+        <input class="login-input" type="text" id="regName" placeholder="Jean Dupont">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Email</label>
+        <input class="login-input" type="email" id="regEmail" placeholder="votre@email.com">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Mot de passe souhaité</label>
+        <input class="login-input" type="password" id="regPassword" placeholder="8 caractères minimum">
+      </div>
+      <button class="login-btn" id="regBtn" onclick="doRegisterRequest()" style="background:var(--af)">Envoyer la demande</button>
+    </div>
+
     <div class="login-error" id="loginError"></div>
+    <div id="loginSuccess" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<!-- PENDING SCREEN -->
+<div id="pendingScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="text-align:center;padding:40px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;max-width:400px;">
+    <div style="font-size:40px;margin-bottom:16px;">⏳</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Demande en attente</div>
+    <div style="color:var(--muted);font-size:13px;line-height:1.6;">Votre demande d'accès a été envoyée à l'administrateur. Vous recevrez une confirmation une fois votre compte validé.</div>
+    <button onclick="doLogout()" style="margin-top:20px;padding:10px 24px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted2);cursor:pointer;font-family:'Mulish',sans-serif;font-size:13px;">Se déconnecter</button>
   </div>
 </div>
 
@@ -540,6 +579,10 @@ td {
       Charger
       <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
     </label>
+    <button class="btn btn-ghost" id="adminBtn" onclick="openAdminPanel()" style="display:none;color:var(--yellow);border-color:rgba(234,179,8,0.3)" title="Panneau Admin">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Admin <span id="pendingBadge" style="display:none;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;margin-left:2px">0</span>
+    </button>
     <button class="btn btn-primary" onclick="openModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Ajouter
@@ -597,11 +640,34 @@ td {
   </div>
 </div>
 
+<!-- ADMIN PANEL -->
+<div class="overlay" id="adminOverlay" style="display:none" onclick="if(event.target===this)closeAdminPanel()">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <div class="modal-title">👥 Panneau Administrateur</div>
+      <button class="modal-close" onclick="closeAdminPanel()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Demandes en attente</div>
+      <div id="adminPendingList">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Chargement…</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin:20px 0 12px">Utilisateurs actifs</div>
+      <div id="adminActiveList">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Chargement…</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAdminPanel()">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 // ===================== FIREBASE =====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBEPJiSjUNn5kIpk0XgoUjRrtx9iAEyJA0",
@@ -616,15 +682,53 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+const ADMIN_EMAIL = 'sebastien.caruana@circet.fr';
+
 // ===================== AUTH =====================
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     document.getElementById('loginScreen').style.display = 'none';
+    // Check if user is approved
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    // Auto-approve admin account
+    if (!userDoc.exists()) {
+      if (user.email === ADMIN_EMAIL) {
+        await setDoc(doc(db, "users", user.uid), {
+          name: 'Admin', email: user.email, status: 'approved', createdAt: new Date().toISOString()
+        });
+      } else {
+        document.getElementById('pendingScreen').style.display = 'flex';
+        return;
+      }
+    } else if (userDoc.data().status !== 'approved') {
+      document.getElementById('pendingScreen').style.display = 'flex';
+      document.getElementById('pendingScreen').style.flexDirection = 'column';
+      return;
+    }
+    document.getElementById('pendingScreen').style.display = 'none';
+    // Show admin button if admin
+    if (user.email === ADMIN_EMAIL) {
+      document.getElementById('adminBtn').style.display = 'flex';
+      checkPendingCount();
+    }
     loadFromFirebase();
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('pendingScreen').style.display = 'none';
   }
 });
+
+function switchLoginTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('formLogin').style.display = isLogin ? '' : 'none';
+  document.getElementById('formRegister').style.display = isLogin ? 'none' : '';
+  document.getElementById('tabLogin').style.background = isLogin ? 'var(--blue)' : 'none';
+  document.getElementById('tabLogin').style.color = isLogin ? '#fff' : 'var(--muted2)';
+  document.getElementById('tabRegister').style.background = isLogin ? 'none' : 'var(--af)';
+  document.getElementById('tabRegister').style.color = isLogin ? 'var(--muted2)' : '#fff';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('loginSuccess').style.display = 'none';
+}
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
@@ -648,9 +752,130 @@ async function doLogin() {
   }
 }
 
+async function doRegisterRequest() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const btn = document.getElementById('regBtn');
+  const errEl = document.getElementById('loginError');
+  const succEl = document.getElementById('loginSuccess');
+  errEl.style.display = 'none';
+  succEl.style.display = 'none';
+  if (!name) { errEl.textContent = '❌ Veuillez entrer votre nom.'; errEl.style.display = 'block'; return; }
+  if (!email) { errEl.textContent = '❌ Veuillez entrer votre email.'; errEl.style.display = 'block'; return; }
+  if (password.length < 8) { errEl.textContent = '❌ Le mot de passe doit faire au moins 8 caractères.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Envoi…';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, "users", cred.user.uid), {
+      name, email, status: 'pending', createdAt: new Date().toISOString()
+    });
+    await signOut(auth);
+    succEl.textContent = '✅ Demande envoyée ! L\'administrateur vous activera prochainement.';
+    succEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Envoyer la demande';
+    document.getElementById('regName').value = '';
+    document.getElementById('regEmail').value = '';
+    document.getElementById('regPassword').value = '';
+  } catch(e) {
+    let msg = 'Erreur lors de la demande.';
+    if (e.code === 'auth/email-already-in-use') msg = '❌ Cet email est déjà utilisé.';
+    if (e.code === 'auth/invalid-email') msg = '❌ Email invalide.';
+    if (e.code === 'auth/weak-password') msg = '❌ Mot de passe trop faible.';
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Envoyer la demande';
+  }
+}
+
 async function doLogout() {
   if (!confirm('Se déconnecter ?')) return;
   await signOut(auth);
+}
+
+// ===================== ADMIN PANEL =====================
+async function checkPendingCount() {
+  const snap = await getDocs(collection(db, "users"));
+  const pending = snap.docs.filter(d => d.data().status === 'pending').length;
+  const badge = document.getElementById('pendingBadge');
+  if (pending > 0) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = pending;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function openAdminPanel() {
+  document.getElementById('adminOverlay').style.display = 'flex';
+  await renderAdminPanel();
+}
+
+function closeAdminPanel() {
+  document.getElementById('adminOverlay').style.display = 'none';
+}
+
+async function renderAdminPanel() {
+  const snap = await getDocs(collection(db, "users"));
+  const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const pending = users.filter(u => u.status === 'pending');
+  const approved = users.filter(u => u.status === 'approved');
+
+  const pendingEl = document.getElementById('adminPendingList');
+  const activeEl = document.getElementById('adminActiveList');
+
+  if (pending.length === 0) {
+    pendingEl.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px;background:var(--surface2);border-radius:8px">✅ Aucune demande en attente</div>`;
+  } else {
+    pendingEl.innerHTML = pending.map(u => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+        <div>
+          <div style="font-weight:600;font-size:14px">${u.name}</div>
+          <div style="color:var(--muted);font-size:12px">${u.email} · Demande le ${new Date(u.createdAt).toLocaleDateString('fr-FR')}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="approveUser('${u.id}')" style="padding:7px 14px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">✓ Valider</button>
+          <button onclick="rejectUser('${u.id}')" style="padding:7px 14px;background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">✗ Refuser</button>
+        </div>
+      </div>`).join('');
+  }
+
+  if (approved.length === 0) {
+    activeEl.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px;background:var(--surface2);border-radius:8px">Aucun utilisateur actif</div>`;
+  } else {
+    activeEl.innerHTML = approved.map(u => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+        <div>
+          <div style="font-weight:600;font-size:14px">${u.name} ${u.email === ADMIN_EMAIL ? '<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);border-radius:20px;padding:2px 8px;margin-left:6px">ADMIN</span>' : ''}</div>
+          <div style="color:var(--muted);font-size:12px">${u.email}</div>
+        </div>
+        ${u.email !== ADMIN_EMAIL ? `<button onclick="revokeUser('${u.id}')" style="padding:7px 14px;background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.3);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Révoquer</button>` : ''}
+      </div>`).join('');
+  }
+  checkPendingCount();
+}
+
+async function approveUser(uid) {
+  await updateDoc(doc(db, "users", uid), { status: 'approved' });
+  showToast('✅ Utilisateur validé !');
+  await renderAdminPanel();
+}
+
+async function rejectUser(uid) {
+  if (!confirm('Refuser et supprimer cette demande ?')) return;
+  await deleteDoc(doc(db, "users", uid));
+  showToast('🗑️ Demande supprimée.');
+  await renderAdminPanel();
+}
+
+async function revokeUser(uid) {
+  if (!confirm('Révoquer cet utilisateur ?')) return;
+  await updateDoc(doc(db, "users", uid), { status: 'revoked' });
+  showToast('⛔ Accès révoqué.');
+  await renderAdminPanel();
 }
 
 async function loadFromFirebase() {
@@ -700,6 +925,13 @@ function showToast(msg, type = "success") {
 // Expose globals needed by inline HTML handlers
 window.doLogin = doLogin;
 window.doLogout = doLogout;
+window.doRegisterRequest = doRegisterRequest;
+window.switchLoginTab = switchLoginTab;
+window.openAdminPanel = openAdminPanel;
+window.closeAdminPanel = closeAdminPanel;
+window.approveUser = approveUser;
+window.rejectUser = rejectUser;
+window.revokeUser = revokeUser;
 window.showToast = showToast;
 
 // ===================== DATA =====================
@@ -1142,6 +1374,7 @@ document.addEventListener('keydown', e => {
 // Enter key on login
 document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
 document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('regPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doRegisterRequest(); });
 
 // Add loading state to stats bar while Firebase loads
 document.getElementById('statsBar').innerHTML = `<div class="stat-card"><div style="color:var(--muted);font-size:13px">⏳ Chargement des données…</div></div>`;
