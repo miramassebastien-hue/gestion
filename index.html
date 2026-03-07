@@ -286,7 +286,8 @@ td {
 .badge-rm { background: var(--rm-dim); color: var(--rm); border: 1px solid rgba(59,130,246,0.3); }
 .badge-af { background: var(--af-dim); color: var(--af); border: 1px solid rgba(168,85,247,0.3); }
 .badge-oui { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-.badge-non { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.badge-non { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+.badge-attente { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
 .badge-plp { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
 .badge-fac { background: rgba(249,115,22,0.1); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
 .badge-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
@@ -719,6 +720,7 @@ function badgeOk(val) {
   if (v.includes('FAC RM')) return `<span class="badge badge-fac">FAC RM</span>`;
   if (v.includes('FAC AF')) return `<span class="badge" style="background:var(--af-dim);color:var(--af);border:1px solid rgba(168,85,247,.3)">FAC AF</span>`;
   if (v.includes('PLP')) return `<span class="badge badge-plp">PLP OK</span>`;
+  if (v.includes('ATTENTE PHOTO TECH')) return `<span class="badge badge-attente">⏳ ATTENTE PHOTO TECH</span>`;
   if (v === 'OUI' || v === 'OK') return `<span class="badge badge-ok">✓ ${val}</span>`;
   return `<span class="badge" style="background:var(--surface2);color:var(--muted2);border:1px solid var(--border)">${val}</span>`;
 }
