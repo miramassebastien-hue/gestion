@@ -533,7 +533,70 @@ td {
   </div>
 </div>
 
-<script>
+<script type="module">
+// ===================== FIREBASE =====================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBEPJiSjUNn5kIpk0XgoUjRrtx9iAEyJA0",
+  authDomain: "suivi-rm-af.firebaseapp.com",
+  projectId: "suivi-rm-af",
+  storageBucket: "suivi-rm-af.firebasestorage.app",
+  messagingSenderId: "263638159895",
+  appId: "1:263638159895:web:885a1517d8e46d134b4252"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function loadFromFirebase() {
+  try {
+    const docSnap = await getDoc(doc(db, "suivi", "data"));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.cam) camData = data.cam;
+      if (data.tso) tsoData = data.tso;
+    }
+  } catch(e) {
+    console.error("Erreur chargement Firebase:", e);
+    showToast("⚠️ Erreur de connexion Firebase", "error");
+  }
+  applyFilters();
+  renderStats();
+}
+
+async function saveToFirebase() {
+  try {
+    await setDoc(doc(db, "suivi", "data"), { cam: camData, tso: tsoData });
+    showToast("✅ Données sauvegardées !", "success");
+  } catch(e) {
+    console.error("Erreur sauvegarde Firebase:", e);
+    showToast("❌ Erreur de sauvegarde", "error");
+  }
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type = "success") {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;font-family:'Mulish',sans-serif;transition:all 0.3s;opacity:0;transform:translateY(10px);pointer-events:none;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = type === 'success' ? '#14532d' : '#450a0a';
+  t.style.color = type === 'success' ? '#22c55e' : '#ef4444';
+  t.style.border = `1px solid ${type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`;
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 3000);
+}
+
+// Expose globals needed by inline HTML handlers
+window.showToast = showToast;
+
 // ===================== DATA =====================
 let currentTab = 'cam';
 let editIndex = null;
@@ -544,12 +607,11 @@ const defaultCamData = [{"type": "AF", "code": "IRCFTH", "nd": "0491475671", "da
 
 const defaultTsoData = [{"nd": "0490424435", "technicien": "CALIK Sinan", "partenaire": "SCOFITEC", "verification": "MANQUE PHOTO ETIQUETTE PB"}, {"nd": "0442025150", "technicien": "BALKAYA Rodi", "partenaire": "K WORK CONNECT", "verification": "Manque PHOTO ETIQUETTE PB / interieur PB/ pas de code de decharge"}, {"nd": "0490439278", "technicien": "BACHIR-BEY Meihdy", "partenaire": "HK TELECOM", "verification": "PHOTOS ok et com ok"}, {"nd": "0442091973", "technicien": "TABOUCHI Bilel", "partenaire": "Azur fibre", "verification": "Photo Pas à pas ok / geolocalisation ok / com ok"}, {"nd": "0491426265", "technicien": "CHAIEB Hedi", "partenaire": "MT FIBER", "verification": "Fiche Kizeo n'était pas la bonne"}];
 
-let camData = JSON.parse(localStorage.getItem('suivi_cam_v2') || 'null') || defaultCamData;
-let tsoData = JSON.parse(localStorage.getItem('suivi_tso_v2') || 'null') || defaultTsoData;
+let camData = [...defaultCamData];
+let tsoData = [...defaultTsoData];
 
 function save() {
-  localStorage.setItem('suivi_cam_v2', JSON.stringify(camData));
-  localStorage.setItem('suivi_tso_v2', JSON.stringify(tsoData));
+  saveToFirebase();
 }
 
 // ===================== UI =====================
@@ -917,6 +979,7 @@ function exportJSON() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast("📥 Export JSON téléchargé !");
 }
 
 function importJSON(event) {
@@ -932,12 +995,12 @@ function importJSON(event) {
         save();
         applyFilters();
         renderStats();
-        alert('✅ Données chargées avec succès !');
+        showToast('✅ Données chargées et sauvegardées !');
       } else {
-        alert('❌ Fichier invalide.');
+        showToast('❌ Fichier invalide.', 'error');
       }
     } catch(err) {
-      alert('❌ Erreur lors de la lecture du fichier.');
+      showToast('❌ Erreur lors de la lecture du fichier.', 'error');
     }
   };
   reader.readAsText(file);
@@ -970,12 +1033,29 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey||e.metaKey) && e.key === 'n') { e.preventDefault(); openModal(); }
 });
 
+// Add loading state to stats bar while Firebase loads
+document.getElementById('statsBar').innerHTML = `<div class="stat-card"><div style="color:var(--muted);font-size:13px">⏳ Chargement des données…</div></div>`;
+
 // Init filters visibility
 document.getElementById('filterType').style.display = '';
 document.getElementById('filterOkCam').style.display = '';
 
-applyFilters();
-renderStats();
+// Expose all functions needed by inline HTML onclick handlers
+window.switchTab = switchTab;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.closeModalOutside = closeModalOutside;
+window.saveEntry = saveEntry;
+window.deleteEntry = deleteEntry;
+window.exportJSON = exportJSON;
+window.importJSON = importJSON;
+window.exportCSV = exportCSV;
+window.sortBy = sortBy;
+window.applyFilters = applyFilters;
+
+// Load data from Firebase on startup
+loadFromFirebase();
+
 </script>
 </body>
 </html>
