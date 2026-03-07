@@ -42,6 +42,46 @@ body {
   font-size: 14px;
 }
 
+/* LOGIN SCREEN */
+#loginScreen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.login-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 40px 40px 36px;
+  width: 380px;
+  max-width: 95vw;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  animation: slideUp 0.3s ease;
+}
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo .ltitle { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+.login-logo .lsubtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.login-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.login-label { font-size: 11px; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: 1px; }
+.login-input {
+  padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'Mulish', sans-serif;
+  font-size: 14px; outline: none; transition: border 0.2s, box-shadow 0.2s; width: 100%;
+}
+.login-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.login-btn {
+  width: 100%; padding: 12px; background: var(--blue); color: #fff; border: none;
+  border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 8px; transition: all 0.2s; letter-spacing: 0.3px;
+}
+.login-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.login-error {
+  background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none;
+}
+
 /* HEADER */
 header {
   background: var(--surface);
@@ -459,6 +499,26 @@ td {
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="ltitle"><span style="color:var(--rm)">RM</span><span style="color:var(--muted)">/</span><span style="color:var(--af)">AF</span></div>
+      <div class="lsubtitle">Suivi Photo — Connexion requise</div>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" id="loginEmail" placeholder="votre@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Mot de passe</label>
+      <input class="login-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
 <header>
   <img src="logo_circetPNG.png" alt="Circet France" style="height:36px;width:auto;object-fit:contain;">
   <div class="logo"><span class="rm">RM</span><span class="sep">/</span><span class="af">AF</span> &nbsp;<span style="color:var(--muted);font-size:13px;font-weight:400">Suivi Photo</span></div>
@@ -483,6 +543,9 @@ td {
     <button class="btn btn-primary" onclick="openModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Ajouter
+    </button>
+    <button class="btn btn-ghost" onclick="doLogout()" title="Se déconnecter" style="color:var(--red);border-color:rgba(239,68,68,0.3)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
 </header>
@@ -538,6 +601,7 @@ td {
 // ===================== FIREBASE =====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBEPJiSjUNn5kIpk0XgoUjRrtx9iAEyJA0",
@@ -550,6 +614,44 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ===================== AUTH =====================
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    loadFromFirebase();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+});
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Connexion…';
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch(e) {
+    let msg = 'Erreur de connexion.';
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') msg = '❌ Email ou mot de passe incorrect.';
+    if (e.code === 'auth/invalid-email') msg = '❌ Adresse email invalide.';
+    if (e.code === 'auth/too-many-requests') msg = '❌ Trop de tentatives. Réessayez plus tard.';
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+  }
+}
+
+async function doLogout() {
+  if (!confirm('Se déconnecter ?')) return;
+  await signOut(auth);
+}
 
 async function loadFromFirebase() {
   try {
@@ -596,6 +698,8 @@ function showToast(msg, type = "success") {
 }
 
 // Expose globals needed by inline HTML handlers
+window.doLogin = doLogin;
+window.doLogout = doLogout;
 window.showToast = showToast;
 
 // ===================== DATA =====================
@@ -1034,6 +1138,10 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
   if ((e.ctrlKey||e.metaKey) && e.key === 'n') { e.preventDefault(); openModal(); }
 });
+
+// Enter key on login
+document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 // Add loading state to stats bar while Firebase loads
 document.getElementById('statsBar').innerHTML = `<div class="stat-card"><div style="color:var(--muted);font-size:13px">⏳ Chargement des données…</div></div>`;
